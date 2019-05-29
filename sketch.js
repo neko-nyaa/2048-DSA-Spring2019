@@ -1,3 +1,9 @@
+// We control screen with a variable
+// 0: Init Screen
+// 1: Gameplay Screen
+// 2: End Screen
+var gameScreen = 0;
+
 function setup() {
   createCanvas(401, 401);
   board = [[0,0,0,0],
@@ -8,10 +14,60 @@ function setup() {
 }
 
 function draw() {
+  displayScreen();
+}
+
+// To display which kind of screen we need
+function displayScreen() {
+  if (gameScreen == 0)
+    initScreen();
+  else if (gameScreen == 1)
+    gameplayScreen();
+  else if (gameScreen == 2)
+    gameOverScreen();
+}
+
+// Content of initScreen
+function initScreen() {
+  background(0);
+  
+  fill(255, 0, 255);
+  textSize(36);
+  textAlign(CENTER);
+  text("2048 Game Project", 200, 140);
+  
+  fill(255, 255, 0);
+  textSize(22);
+  textAlign(CENTER);
+  text("Click to Start", 200, 300);
+}
+
+// Content of gameScreen
+function gameplayScreen() {
   background(255);
   drawBoard();
 }
 
+// Content of endScreen
+function gameOverScreen() {
+  // codes for game over screen
+}
+
+// input to enter game
+function mousePressed() {
+  // if we are on the initial screen when clicked, start the game
+  if (gameScreen == 0) {
+    startGame();
+  }
+}
+
+// This method sets the necessary variables to start the game  
+function startGame() {
+  gameScreen = 1;
+}
+
+// TODO seperate lines and numbers
+// For draw board with numbers
 function drawBoard() {
 	let w = 100;
 	for (let i = 0; i < 4; i++) {
