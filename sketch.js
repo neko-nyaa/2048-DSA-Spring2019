@@ -6,15 +6,20 @@ var gameScreen = 0;
 
 function setup() {
   createCanvas(401, 401);
+
   board = [[0,0,0,0],
 		   [0,0,0,0],
 		   [0,0,0,0],
 		   [0,0,0,0]];
+  
   play();
 }
 
 function draw() {
   displayScreen();
+  
+  if (checkLose())
+    gameScreen = 2;
 }
 
 // To display which kind of screen we need
@@ -36,10 +41,15 @@ function initScreen() {
   textAlign(CENTER);
   text("2048 Game Project", 200, 140);
   
-  fill(255, 255, 0);
+  fill(255);
   textSize(22);
   textAlign(CENTER);
-  text("Click to Start", 200, 300);
+  text("Click to Start", 200, 240);
+  
+  fill(255, 255, 0);
+  textSize(20);
+  textAlign(CENTER);
+  text("In Game, Press Arrow Keys to Play", 200, 300);
 }
 
 // Content of gameScreen
@@ -51,26 +61,32 @@ function gameplayScreen() {
 // Content of endScreen
 function gameOverScreen() {
   // codes for game over screen
+  background(255);
+  
+  fill(255, 255, 0);
+  textSize(30);
+  textAlign(CENTER);
+  text("You Lose, Click to Play Again", 200, 200);
 }
 
 // input to enter game
 function mousePressed() {
   // if we are on the initial screen when clicked, start the game
-  if (gameScreen == 0) {
-    startGame();
+  if (gameScreen == 0)
+    gameScreen = 1;
+  
+  // if lose, press to return to main menu
+  if (gameScreen == 2) {
+    gameScreen = 0;
+    setup();
   }
-}
-
-// This method sets the necessary variables to start the game  
-function startGame() {
-  gameScreen = 1;
 }
 
 // TODO seperate lines and numbers
 // For draw board with numbers
 function drawBoard() {
 	let w = 100;
-	for (let i = 0; i < 4; i++) {
+	for (let i = 0; i < 4; i++) { 
 		for (let j = 0; j < 4; j++) {
 			noFill();
 			stroke(0);
@@ -90,6 +106,7 @@ function drawBoard() {
 	}
 }
 
+// Add number in random position in the board
 function addNum() {
 	let choices = [];
 	
@@ -110,12 +127,14 @@ function addNum() {
 	}
 }	
 
+// Start the game with 2 random numbers
 function play() {
   addNum();
   addNum();
   //console.table(board);
 }
 
+// Move all numbers in an input direction
 function move(arr, keyCode) {
   //create new arr
   let New = [];
@@ -138,6 +157,7 @@ function move(arr, keyCode) {
   }
 }
 
+// Merge 2 nearby identical numbers
 function merge(arr, keyCode) {
   //perform on the old row
   for (let i = 0; i <= 3; i++) {
@@ -163,6 +183,7 @@ function merge(arr, keyCode) {
   return arr;
 }
 
+// Flip the board
 function transposeArray(array){
     var newArray = [[],[],[],[]];
 
@@ -200,10 +221,12 @@ function keyPressed() {
   }
 }
 
+// Check if any number has been moved
 function checkMove() {
   return true;
 }
 
+// Actions per input direction
 function action(arr, keyCode) {
   // merge after each move and move after each merge
   // may gone wrong in some case
@@ -211,4 +234,40 @@ function action(arr, keyCode) {
   arr = merge(arr, keyCode);
   arr = move (arr, keyCode);
   return arr;
+}
+
+// Check lose condition
+function checkLose() {
+  // if no identical nearby -> lose
+  // i is row, j is column
+  for (let i = 0; i < 4; i++) {
+    for (let j = 0; j < 4; j++) {
+      // if there is blank space, continue
+      if (board[i][j] == 0) {
+        return false;
+      }
+      
+      // if not on row or column 3, check one on the right and one below
+      // With this, able to check every pair
+      // Except for pairs on column 3 and on row 3
+      else if (i != 3 && j != 3) {
+        if (board[i][j] == board[i+1][j]
+            || board[i][j] == board[i][j+1])
+          return false;
+      }
+      
+      // if on column 3, check one below
+      else if (j == 3 && i != 3) {
+        if (board[i][j] == board[i+1][j])
+          return false;
+      }
+      
+      // if on row 3, check one on the right
+      else if (i == 3 && j != 3) {
+        if (board[i][j] == board[i][j+1])
+          return false;
+      }
+    }
+  }
+  return true;
 }
