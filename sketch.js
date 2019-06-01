@@ -216,25 +216,27 @@ function move(arr, keyCode) {
 // Merge 2 nearby identical numbers
 function merge(arr, keyCode) {
   //perform on the old row
-  for (let i = 0; i <= 3; i++) {
-    if (arr[i] == arr[i + 1] && arr[i] !== 0 &&
-      arr[i + 1] !== 0) {
-      //TODO fix move down but merge up, same for l/r
-      //16,4,4,4 -> 16,4,8,0
-      //TODO fix merge twice 0,4,4,8 -> 0,0,0,16
-      switch (keyCode) {
-        case (LEFT_ARROW):
-        case (DOWN_ARROW):
+  switch (keyCode) {
+    case (LEFT_ARROW):
+    case (UP_ARROW):
+      for (let i = 0; i <= 3; i++) {
+        if (arr[i] == arr[i + 1] && arr[i] !== 0 &&
+          arr[i + 1] !== 0) {
           arr[i] = arr[i] + arr[i + 1];
           arr[i + 1] = 0;
-          break;
-        case (RIGHT_ARROW):
-        case (UP_ARROW):
-          arr[i + 1] = arr[i + 1] + arr[i];
-          arr[i] = 0;
-          break;
+        }
       }
-    }
+      break;
+    case (RIGHT_ARROW):
+    case (DOWN_ARROW):
+      for (let i = 3; i >= 0; i--) {
+        if (arr[i] == arr[i - 1] && arr[i] !== 0 &&
+          arr[i - 1] !== 0) {
+          arr[i - 1] = arr[i - 1] + arr[i];
+          arr[i] = 0;
+        }
+      }
+      break;
   }
   return arr;
 }
