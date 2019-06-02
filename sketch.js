@@ -46,7 +46,7 @@ function displayScreen() {
 
 // Content of initScreen
 function initScreen() {
-  background(255);
+  background(200);
 
   noFill();
   stroke(0);
@@ -76,14 +76,15 @@ function initScreen() {
 
 // Content of gameScreen
 function gameplayScreen() {
-  background(255);
+  background(0,0,95);
   drawBoard();
 }
 
 // Content of endScreen
 function gameOverScreen() {
   // codes for game over screen
-  background(255);
+  colorMode(RGB);
+  background(200);
 
   noFill();
   stroke(0);
@@ -165,11 +166,11 @@ function drawBoard() {
 
       //each element excluding 0 will appear on board
       if (numOnPane !== 0) {
-        NumSize = getNumberSize(numOnPane);
+        NumSize = setNumberSize(numOnPane);
+        NumColor = setNumberColor(numOnPane);
         // textSize in front will prevent random size bug
         textSize(NumSize);
-        // fill number with all the greeness
-        fill(0, 255, 0);
+        fill(NumColor);
         text(numOnPane, j * w + w / 2, i * w + w / 2);
         textAlign(CENTER, CENTER);
       }
@@ -177,7 +178,7 @@ function drawBoard() {
   }
 }
 
-function getNumberSize(num) {
+function setNumberSize(num) {
   let Dividend = 1;
   let numSize = 70;
 
@@ -188,6 +189,22 @@ function getNumberSize(num) {
 
   if (numSize < 0) return 9;
   else return numSize;
+}
+
+function setNumberColor(num) {
+  let third = 0;
+  let Dividend = 2;
+  
+  while (num / Dividend > 1) {
+    third += 10;  
+    Dividend *= 2;
+  }
+  
+  if (third > 80) third = 80;
+  
+  colorMode(HSL);
+  let c = color(0, 100, third);
+  return c;
 }
 
 // Move all numbers in an input direction
@@ -216,25 +233,27 @@ function move(arr, keyCode) {
 // Merge 2 nearby identical numbers
 function merge(arr, keyCode) {
   //perform on the old row
-  for (let i = 0; i <= 3; i++) {
-    if (arr[i] == arr[i + 1] && arr[i] !== 0 &&
-      arr[i + 1] !== 0) {
-      //TODO fix move down but merge up, same for l/r
-      //16,4,4,4 -> 16,4,8,0
-      //TODO fix merge twice 0,4,4,8 -> 0,0,0,16
-      switch (keyCode) {
-        case (LEFT_ARROW):
-        case (DOWN_ARROW):
+  switch (keyCode) {
+    case (LEFT_ARROW):
+    case (UP_ARROW):
+      for (let i = 0; i <= 3; i++) {
+        if (arr[i] == arr[i + 1] && arr[i] !== 0 &&
+          arr[i + 1] !== 0) {
           arr[i] = arr[i] + arr[i + 1];
           arr[i + 1] = 0;
-          break;
-        case (RIGHT_ARROW):
-        case (UP_ARROW):
-          arr[i + 1] = arr[i + 1] + arr[i];
-          arr[i] = 0;
-          break;
+        }
       }
-    }
+      break;
+    case (RIGHT_ARROW):
+    case (DOWN_ARROW):
+      for (let i = 3; i >= 0; i--) {
+        if (arr[i] == arr[i - 1] && arr[i] !== 0 &&
+          arr[i - 1] !== 0) {
+          arr[i - 1] = arr[i - 1] + arr[i];
+          arr[i] = 0;
+        }
+      }
+      break;
   }
   return arr;
 }
