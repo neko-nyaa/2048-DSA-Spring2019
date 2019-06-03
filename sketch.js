@@ -3,6 +3,8 @@
 // 1: Gameplay Screen
 // 2: End Screen
 var gameScreen;
+var undoStack = [];
+var redoStack = [];
 
 function preload() {
   // load image
@@ -12,16 +14,17 @@ function preload() {
 function setup() {
   gameScreen = 0;
 
-  createCanvas(401, 401);
-
   board = [
     [0, 0, 0, 0],
     [0, 0, 0, 0],
     [0, 0, 0, 0],
     [0, 0, 0, 0]
   ];
+  
+  createCanvas(401, 401);
 
   play();
+  undoStack.push(board);
 }
 
 function draw() {
@@ -67,6 +70,12 @@ function initScreen() {
   textSize(20);
   textAlign(CENTER);
   text("In Game, Press Arrow Keys to Play", 200, 300);
+
+  
+  fill(0);
+  textSize(20);
+  textAlign(CENTER);
+  text("Press Z for Undo, X for Redo", 200, 350);
 
   fill(255, 0, 100);
   textSize(20);
@@ -298,7 +307,12 @@ function keyPressed() {
     if (checkMoved()) {
       addNum();
     }
+    undoStack.push(board);
   }
+  if (keyCode == 90) 
+    undo();
+  if (keyCode == 88)
+    redo();
 }
 
 // Check if any number has been moved
@@ -351,4 +365,25 @@ function checkLose() {
   }
   // By now, every pairs include one with [3][3] has been check
   return true;
+}
+
+
+function undo(){
+  // this undos last move
+  if (undoStack.length <= 1)  // return if there is nothing to undo
+    return;
+  curBoard = undoStack.pop();
+  redoStack.push(curBoard);
+  board = undoStack[undoStack.length-1];
+  drawBoard();
+}
+
+function redo(){
+  // this undos last undos
+  if (redoStack.length == 0)  // return if there is nothing to redo
+    return;
+  preBoard = redoStack.pop();
+  undoStack.push(preBoard); 
+  board = redoStack[redoStack.length-1];
+  drawBoard();
 }
