@@ -3,6 +3,9 @@
 // 1: Gameplay Screen
 // 2: End Screen
 var gameScreen;
+var board;
+let score;
+
 var undoStack = [];
 var redoStack = [];
 
@@ -12,29 +15,36 @@ function preload() {
 }
 
 function setup() {
-  gameScreen = 0;
+  createCanvas(401, 401);
+  resetBoard();
+}
 
+function draw() {
+  // draw() loops forever, until stopped
+  displayScreen();
+
+  if (checkLose()) {
+    // Game lose screen comes up
+    endGame();
+  }
+}
+
+/******************************************************/
+/****************FOR GAMESCREEN DISPLAY****************/
+/******************************************************/
+
+function resetBoard() {
+  gameScreen = 0;
+  score = 0;
   board = [
     [0, 0, 0, 0],
     [0, 0, 0, 0],
     [0, 0, 0, 0],
     [0, 0, 0, 0]
   ];
-  
-  createCanvas(401, 401);
-
+  undoStack = [];
+  redoStack = [];
   play();
-  undoStack.push(board);
-}
-
-function draw() {
-  displayScreen();
-
-  if (checkLose()) {
-    // game lose screen comes up after 2 sec
-    // TODO fix bug lead to having to spam click to play again
-    setTimeout(endGame, 2000);
-  }
 }
 
 // To display which kind of screen we need
@@ -49,11 +59,11 @@ function displayScreen() {
 
 // Content of initScreen
 function initScreen() {
-  background(200);
+  background(255);
 
   noFill();
   stroke(0);
-  rect(0, 0, 400, 400);
+  rect(0, 0, 400, 400, 30);
 
   // display image
   img.resize(150, 0);
@@ -69,35 +79,45 @@ function initScreen() {
   fill(0);
   textSize(20);
   textAlign(CENTER);
-  text("In Game, Press Arrow Keys to Play", 200, 300);
+  text("In Game, Press Arrow Keys to Play", 200, 290);
 
-  
   fill(0);
   textSize(20);
   textAlign(CENTER);
-  text("Press Z for Undo, X for Redo", 200, 350);
+  text("Press Z for Undo, X for Redo", 200, 340);
 
   fill(255, 0, 100);
   textSize(20);
   textAlign(CENTER);
-  text("Nati-on Bear", 250, 390);
+  text("Nati-on Bear", 330, 390);
+
+  fill(255, 0, 100);
+  textSize(20);
+  textAlign(CENTER);
+  text("neko_nyaa", 200, 390);
+
+  fill(255, 0, 100);
+  textSize(20);
+  textAlign(CENTER);
+  text("Thachvictory", 70, 390);
 }
 
 // Content of gameScreen
 function gameplayScreen() {
-  background(0,0,95);
+  background(0, 0, 100);
   drawBoard();
+  select('#score').html(score);
 }
 
 // Content of endScreen
 function gameOverScreen() {
   // codes for game over screen
   colorMode(RGB);
-  background(200);
+  background(255);
 
   noFill();
   stroke(0);
-  rect(0, 0, 400, 400);
+  rect(0, 0, 400, 400, 20);
 
   fill(255, 255, 0);
   textSize(25);
@@ -112,9 +132,8 @@ function mousePressed() {
     startGame();
 
   // if lose, press to return to main menu
-  if (gameScreen == 2) {
-    setTimeout(startGameAgain, 1000);
-  }
+  if (gameScreen == 2)
+    startGameAgain();
 }
 
 function startGame() {
@@ -126,61 +145,29 @@ function endGame() {
 }
 
 function startGameAgain() {
-  setup();
-}
-
-// Start the game with 2 random numbers
-function play() {
-  addNum();
-  addNum();
-}
-
-// Add number in random position in the board
-function addNum() {
-  let choices = [];
-
-  //if position has an zero, add its coors to choices
-  for (let i = 0; i < 4; i++) {
-    for (let j = 0; j < 4; j++) {
-      if (board[i][j] == 0) {
-        choices.push({
-          x: i,
-          y: j
-        });
-      }
-    }
-  }
-
-  //coor gets random coor from choices and fill it with 2 or 4
-  if (choices.length > 0) {
-    let coor = random(choices);
-    let rand = random(1);
-    board[coor.x][coor.y] = rand > 0.5 ? 2 : 4;
-  }
+  resetBoard();
 }
 
 // TODO seperate lines and numbers
 // For draw board with numbers
 function drawBoard() {
-  let w = 100;
+  let side = 100;
   for (let i = 0; i < 4; i++) {
     for (let j = 0; j < 4; j++) {
       noFill();
       stroke(0);
-      rect(i * w, j * w, w, w);
-      //each element including 0 has 
-      //a square pane with length of 100
-
+      rect(i * side, j * side, side, side, 20);
+      // Each element including 0 has 
+      // A square pane with length of 100
       numOnPane = board[i][j];
-
-      //each element excluding 0 will appear on board
+      // Each element excluding 0 will appear on board
       if (numOnPane !== 0) {
         NumSize = setNumberSize(numOnPane);
         NumColor = setNumberColor(numOnPane);
         // textSize in front will prevent random size bug
         textSize(NumSize);
         fill(NumColor);
-        text(numOnPane, j * w + w / 2, i * w + w / 2);
+        text(numOnPane, j * side + side / 2, i * side + side / 2);
         textAlign(CENTER, CENTER);
       }
     }
@@ -203,17 +190,87 @@ function setNumberSize(num) {
 function setNumberColor(num) {
   let third = 0;
   let Dividend = 2;
-  
+
   while (num / Dividend > 1) {
-    third += 10;  
+    third += 8;
     Dividend *= 2;
   }
-  
+
   if (third > 80) third = 80;
-  
+
   colorMode(HSL);
   let c = color(0, 100, third);
   return c;
+}
+
+/******************************************************/
+/****************FOR GAMEPLAY LOGIC********************/
+/******************************************************/
+
+// Start the game with 2 random numbers
+function play() {
+  addNum();
+  addNum();
+  undoStack.push({grid: board, Score: score});
+}
+
+// Add number in random position in the board
+function addNum() {
+  let choices = [];
+
+  //if position has an zero, add its coors to choices
+  for (let i = 0; i < 4; i++) {
+    for (let j = 0; j < 4; j++) {
+      if (board[i][j] == 0) {
+        choices.push({
+          xVal: i,
+          yVal: j
+        });
+      }
+    }
+  }
+
+  //coor gets random coor from choices and fill it with 2 or 4
+  if (choices.length > 0) {
+    let coor = random(choices);
+    let rand = random(1);
+    board[coor.xVal][coor.yVal] = rand >= 0.5 ? 2 : 4;
+  }
+}
+
+
+function keyPressed() {
+  // 65: a, 68: d, 87: w, 83: s
+  let prevBoard = copyBoard(board);
+
+  if (keyCode == 65 || keyCode == 68 ||
+    keyCode == 87 || keyCode == 83) {
+    if (keyCode == 83 || keyCode == 87) {
+      board = rotateArray(board);
+    }
+
+    for (let i = 0; i < 4; i++) {
+      board[i] = action(board[i], keyCode);
+    }
+
+    if (keyCode == 83 || keyCode == 87) {
+      board = rotateArray(board);
+    }
+    undoStack.push({grid: board, Score: score});
+    // after each key pressed, 
+    // if any number is moving, add new num
+    // else no adding new num
+    if (checkMoved(prevBoard, board)) {
+      addNum();
+      redoStack = [];
+    }
+  } 
+  else if (keyCode == 90)
+    undo();
+  else if (keyCode == 88)
+    redo();
+
+  return false; // prevent any default behaviour
 }
 
 // Move all numbers in an input direction
@@ -226,15 +283,17 @@ function move(arr, keyCode) {
   }
   //add remaining zeros to the new arr
   let remain = 4 - New.length;
-  let zeros = Array(remain).fill(0);
+  let remainingZero = Array(remain).fill(0);
   switch (keyCode) {
-    case (RIGHT_ARROW):
-    case (DOWN_ARROW):
-      zeros = zeros.concat(New);
-      return zeros;
-    case (LEFT_ARROW):
-    case (UP_ARROW):
-      New = New.concat(zeros);
+    case (68):
+    case (83):
+      // Move right
+      remainingZero = remainingZero.concat(New);
+      return remainingZero;
+    case (65):
+    case (87):
+      // Move left
+      New = New.concat(remainingZero);
       return New;
   }
 }
@@ -243,32 +302,35 @@ function move(arr, keyCode) {
 function merge(arr, keyCode) {
   //perform on the old row
   switch (keyCode) {
-    case (LEFT_ARROW):
-    case (UP_ARROW):
-      for (let i = 0; i <= 3; i++) {
+    case (65):
+    case (87):
+      // Merge left
+      for (let i = 0; i <= 2; i++) {
         if (arr[i] == arr[i + 1] && arr[i] !== 0 &&
           arr[i + 1] !== 0) {
           arr[i] = arr[i] + arr[i + 1];
           arr[i + 1] = 0;
+          score += arr[i];
         }
       }
       break;
-    case (RIGHT_ARROW):
-    case (DOWN_ARROW):
-      for (let i = 3; i >= 0; i--) {
+    case (68):
+    case (83):
+      // Merge right
+      for (let i = 3; i >= 1; i--) {
         if (arr[i] == arr[i - 1] && arr[i] !== 0 &&
           arr[i - 1] !== 0) {
-          arr[i - 1] = arr[i - 1] + arr[i];
-          arr[i] = 0;
+          arr[i] = arr[i] + arr[i - 1];
+          arr[i - 1] = 0;
+          score += arr[i];
         }
       }
       break;
   }
-  return arr;
 }
 
 // Flip the board
-function transposeArray(array) {
+function rotateArray(array) {
   var newArray = [
     [],
     [],
@@ -285,50 +347,67 @@ function transposeArray(array) {
   return newArray;
 }
 
-function keyPressed() {
-  if (keyCode == LEFT_ARROW || keyCode == RIGHT_ARROW ||
-    keyCode == UP_ARROW || keyCode == DOWN_ARROW) {
+function copyBoard(theBoard) {
+  let boardNow = [
+    [],
+    [],
+    [],
+    []
+  ];
 
-    if (keyCode == UP_ARROW || keyCode == DOWN_ARROW) {
-      board = transposeArray(board);
+  for (let i = 0; i <= 3; i++) {
+    for (let j = 0; j <= 3; j++) {
+      boardNow[i][j] = theBoard[i][j];
     }
-
-    for (let i = 0; i < 4; i++) {
-      board[i] = action(board[i], keyCode);
-    }
-
-    if (keyCode == UP_ARROW || keyCode == DOWN_ARROW) {
-      board = transposeArray(board);
-    }
-
-    // after each key pressed, add new num, need to implement
-    // checking function to check if any number is moving
-    // if not, no adding new num
-    if (checkMoved()) {
-      addNum();
-    }
-    undoStack.push(board);
   }
-  if (keyCode == 90) 
-    undo();
-  if (keyCode == 88)
-    redo();
+
+  return boardNow;
 }
 
+
 // Check if any number has been moved
-function checkMoved() {
-  return true;
+function checkMoved(oldBoard, newBoard) {
+  for (let i = 0; i <= 3; i++) {
+    for (let j = 0; j <= 3; j++) {
+      if (oldBoard[i][j] != newBoard[i][j]) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 // Actions per input direction
 function action(arr, keyCode) {
   // merge after each move and move after each merge
-  // may gone wrong in some case
   arr = move(arr, keyCode);
-  arr = merge(arr, keyCode);
+  merge(arr, keyCode);
   arr = move(arr, keyCode);
   return arr;
 }
+
+function undo() {
+  // this undos last move
+  if (undoStack.length <= 1)
+    // return if there is nothing to undo
+    return;
+  curBoard = undoStack.pop();
+  redoStack.push(curBoard);
+  board = copyBoard(undoStack[undoStack.length - 1].grid);
+  score = undoStack[undoStack.length - 1].Score;
+}
+
+function redo() {
+  // this undos last undos
+  if (redoStack.length <= 1)
+    // return if there is nothing to redo
+    return;
+  preBoard = redoStack.pop();
+  undoStack.push(preBoard);
+  board = copyBoard(redoStack[redoStack.length - 1].grid);
+  score = redoStack[redoStack.length - 1].Score;
+}
+
 
 // Check lose condition
 function checkLose() {
@@ -365,25 +444,4 @@ function checkLose() {
   }
   // By now, every pairs include one with [3][3] has been check
   return true;
-}
-
-
-function undo(){
-  // this undos last move
-  if (undoStack.length <= 1)  // return if there is nothing to undo
-    return;
-  curBoard = undoStack.pop();
-  redoStack.push(curBoard);
-  board = undoStack[undoStack.length-1];
-  drawBoard();
-}
-
-function redo(){
-  // this undos last undos
-  if (redoStack.length == 0)  // return if there is nothing to redo
-    return;
-  preBoard = redoStack.pop();
-  undoStack.push(preBoard); 
-  board = redoStack[redoStack.length-1];
-  drawBoard();
 }
